@@ -8,9 +8,13 @@ import com.kazmiruk.clearsolution.model.properties.UserProperties;
 import com.kazmiruk.clearsolution.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,23 +26,58 @@ public class UserService {
 
     private final UserProperties userProperties;
 
-    public void createUser(UserDto userRequest) {
-        checkIfUserWithEmailAlreadyExists(userRequest.getEmail());
-        int userAge = Period.between(userRequest.getDateOfBirth(), LocalDate.now()).getYears();
-        if (userAge < userProperties.getAge()) {
-            throw new BadRequestException(
-                    "User must be %d years old or older".formatted(userProperties.getAge())
-            );
-        }
+    @Transactional
+    public UserDto createUser(UserDto userRequest) {
+        checkIsUserEmailUnique(userRequest.getEmail());
+        checkUserAge(userRequest.getDateOfBirth());
         User user = userMapper.toEntity(userRequest);
-        userRepository.save(user);
+        user = userRepository.save(user);
+        return userMapper.toDto(user);
     }
 
-    private void checkIfUserWithEmailAlreadyExists(String email) {
+    private void checkIsUserEmailUnique(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new BadRequestException(
                     "User with email '%s' already exists".formatted(email)
             );
         }
+    }
+
+    private void checkUserAge(LocalDate dateOfBirth) {
+        int userAge = Period.between(dateOfBirth, LocalDate.now()).getYears();
+        if (userAge < userProperties.getAge()) {
+            throw new BadRequestException(
+                    "User must be %d years old or older".formatted(userProperties.getAge())
+            );
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Set<UserDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream().map(userMapper::toDto).collect(Collectors.toSet());
+    }
+
+    @Transactional(readOnly = true)
+    public UserDto getUserById(Long id) {
+        User user = userRepository.getUserById(id);
+        return userMapper.toDto(user);
+    }
+
+    @Transactional
+    public UserDto updateUser(Long id, UserDto userRequest) {
+        User user = userRepository.getUserById(id);
+        if (!user.getEmail().equals(userRequest.getEmail())) {
+            checkIsUserEmailUnique(userRequest.getEmail());
+        }
+        checkUserAge(userRequest.getDateOfBirth());
+        userMapper.updateEntity(user, userRequest);
+        return userMapper.toDto(user);
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.getUserById(id);
+        userRepository.delete(user);
     }
 }

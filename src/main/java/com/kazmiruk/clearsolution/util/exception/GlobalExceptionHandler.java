@@ -2,6 +2,7 @@ package com.kazmiruk.clearsolution.util.exception;
 
 import com.kazmiruk.clearsolution.model.dto.ErrorDto;
 import com.kazmiruk.clearsolution.model.exception.BadRequestException;
+import com.kazmiruk.clearsolution.model.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -52,11 +53,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorDto<String>> handleBadRequestException(BadRequestException e) {
-        ErrorDto<String> errorDto = new ErrorDto<>(
+        ErrorDto<String> errorResponse = new ErrorDto<>(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 e.getMessage()
         );
-        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorDto<String>> handleNotFoundException(NotFoundException e) {
+        ErrorDto<String> errorResponse = new ErrorDto<>(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                e.getMessage()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
 }
