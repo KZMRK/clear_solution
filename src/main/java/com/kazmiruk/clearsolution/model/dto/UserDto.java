@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.format.annotation.NumberFormat;
 
 import java.time.LocalDate;
 
@@ -35,6 +34,5 @@ public class UserDto {
     private String address;
 
     @Pattern(regexp = "0\\d{9}")
-    @NumberFormat
     private String phoneNumber;
 }

@@ -1,6 +1,6 @@
 package com.kazmiruk.clearsolution.controller;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.github.fge.jsonpatch.JsonPatch;
 import com.kazmiruk.clearsolution.model.dto.UserDto;
 import com.kazmiruk.clearsolution.service.UserService;
 import jakarta.validation.Valid;
@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -54,6 +55,15 @@ public class UserController {
             @Valid @RequestBody UserDto userRequest
     ) {
         UserDto userResponse = userService.updateUser(id, userRequest);
+        return ResponseEntity.ok(userResponse);
+    }
+
+    @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+    public ResponseEntity<UserDto> updateUser(
+            @PathVariable Long id,
+            @RequestBody JsonPatch userPatchBody
+    ) {
+        UserDto userResponse = userService.updateUser(id, userPatchBody);
         return ResponseEntity.ok(userResponse);
     }
 

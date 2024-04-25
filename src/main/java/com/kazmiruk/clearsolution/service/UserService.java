@@ -1,12 +1,19 @@
 package com.kazmiruk.clearsolution.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
 import com.kazmiruk.clearsolution.mapper.UserMapper;
 import com.kazmiruk.clearsolution.model.dto.UserDto;
 import com.kazmiruk.clearsolution.model.entity.User;
 import com.kazmiruk.clearsolution.model.exception.BadRequestException;
+import com.kazmiruk.clearsolution.model.exception.FieldValidationException;
 import com.kazmiruk.clearsolution.model.properties.UserProperties;
 import com.kazmiruk.clearsolution.repository.UserRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +32,10 @@ public class UserService {
     private final UserMapper userMapper;
 
     private final UserProperties userProperties;
+
+    private final ObjectMapper objectMapper;
+
+    private final Validator validator;
 
     @Transactional
     public UserDto createUser(UserDto userRequest) {
@@ -67,12 +78,35 @@ public class UserService {
     @Transactional
     public UserDto updateUser(Long id, UserDto userRequest) {
         User user = userRepository.getUserById(id);
-        if (!user.getEmail().equals(userRequest.getEmail())) {
+        updateUser(userRequest, user);
+        return userMapper.toDto(user);
+    }
+
+    private void updateUser(UserDto userRequest, User targetUser) {
+        if (!targetUser.getEmail().equals(userRequest.getEmail())) {
             checkIsUserEmailUnique(userRequest.getEmail());
         }
         checkUserAge(userRequest.getDateOfBirth());
-        userMapper.updateEntity(user, userRequest);
+        userMapper.updateEntity(targetUser, userRequest);
+    }
+
+    @Transactional
+    public UserDto updateUser(Long id, JsonPatch userPatchRequest) {
+        User user = userRepository.getUserById(id);
+        UserDto userDto = userMapper.toDto(user);
+        userDto = applyPatchToUserDto(userPatchRequest, userDto);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
+        if (!violations.isEmpty()) {
+            throw new FieldValidationException(violations);
+        }
+        updateUser(userDto, user);
         return userMapper.toDto(user);
+    }
+
+    @SneakyThrows
+    private UserDto applyPatchToUserDto(JsonPatch userPathRequest, UserDto targetUser) {
+        JsonNode patchedUser = userPathRequest.apply(objectMapper.convertValue(targetUser, JsonNode.class));
+        return objectMapper.treeToValue(patchedUser, UserDto.class);
     }
 
     @Transactional
