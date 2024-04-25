@@ -80,4 +80,15 @@ public class UserService {
         User user = userRepository.getUserById(id);
         userRepository.delete(user);
     }
+
+    public List<UserDto> getUsersBtBirthDateRange(LocalDate from, LocalDate to) {
+        if (from.isAfter(to)) {
+            throw new BadRequestException(
+                    "Date FROM ('%s') should be before date TO ('%s')".formatted(from, to)
+            );
+        }
+        return userRepository.findAllByDateOfBirthBetween(from, to).stream()
+                .map(userMapper::toDto)
+                .toList();
+    }
 }

@@ -1,9 +1,11 @@
 package com.kazmiruk.clearsolution.controller;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.kazmiruk.clearsolution.model.dto.UserDto;
 import com.kazmiruk.clearsolution.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,9 +15,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -58,6 +63,15 @@ public class UserController {
             @PathVariable Long id
     ) {
         userService.deleteUser(id);
+    }
+
+    @GetMapping("/byBirthDateRange")
+    public ResponseEntity<List<UserDto>> getUsersByBirthDateRange(
+            @RequestParam("from") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate from,
+            @RequestParam("to") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate to
+    ) {
+        List<UserDto> userResponses = userService.getUsersBtBirthDateRange(from, to);
+        return ResponseEntity.ok(userResponses);
     }
 
 }
