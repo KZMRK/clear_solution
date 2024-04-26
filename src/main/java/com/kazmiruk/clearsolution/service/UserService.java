@@ -78,11 +78,11 @@ public class UserService {
     @Transactional
     public UserDto updateUser(Long id, UserDto userRequest) {
         User user = userRepository.getUserById(id);
-        updateUser(userRequest, user);
+        updateUserEntity(userRequest, user);
         return userMapper.toDto(user);
     }
 
-    private void updateUser(UserDto userRequest, User targetUser) {
+    private void updateUserEntity(UserDto userRequest, User targetUser) {
         if (!targetUser.getEmail().equals(userRequest.getEmail())) {
             checkIsUserEmailUnique(userRequest.getEmail());
         }
@@ -99,7 +99,7 @@ public class UserService {
         if (!violations.isEmpty()) {
             throw new FieldValidationException(violations);
         }
-        updateUser(userDto, user);
+        updateUserEntity(userDto, user);
         return userMapper.toDto(user);
     }
 
@@ -115,7 +115,7 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public List<UserDto> getUsersBtBirthDateRange(LocalDate from, LocalDate to) {
+    public List<UserDto> getUsersByBirthDateRange(LocalDate from, LocalDate to) {
         if (from.isAfter(to)) {
             throw new BadRequestException(
                     "Date FROM ('%s') should be before date TO ('%s')".formatted(from, to)
