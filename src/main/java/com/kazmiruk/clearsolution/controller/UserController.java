@@ -80,7 +80,7 @@ public class UserController {
             @RequestParam("from") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate from,
             @RequestParam("to") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate to
     ) {
-        List<UserDto> userResponses = userService.getUsersBtBirthDateRange(from, to);
+        List<UserDto> userResponses = userService.getUsersByBirthDateRange(from, to);
         return ResponseEntity.ok(userResponses);
     }
 
